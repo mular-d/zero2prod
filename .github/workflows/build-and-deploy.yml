@@ -35,6 +35,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           image: targerian1999/zero2prod
+          tags: zero2prod:${{ github.sha }}
 
       - name: Push to dokku
         uses: dokku/github-action@master
