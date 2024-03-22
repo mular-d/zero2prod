@@ -34,8 +34,7 @@ jobs:
           registry: ${{ secrets.DOCKERHUB_REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          image: targerian1999/zero2prod
-          tags: zero2prod:${{ github.sha }}
+          image: ${{ github.repository }}:${{ github.sha }}
 
       - name: Push to dokku
         uses: dokku/github-action@master
