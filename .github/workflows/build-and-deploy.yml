@@ -24,7 +24,6 @@ jobs:
       - name: Login to docker hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.DOCKERHUB_REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
@@ -32,12 +31,13 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: https://sjc.vultrcr.com/simbamart/zero2prod:${{ github.sha }}
+          tags: targerian/zero2prod:${{ github.sha }}
 
       - name: Push to dokku
         uses: dokku/github-action@master
         with:
           git_remote_url: "ssh://dokku@65.21.158.230:22/zero2prod"
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          deploy_docker_image: ${{ secrets.DOCKERHUB_REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+          deploy_docker_image: targerian/zero2prod:${{ github.sha }}
