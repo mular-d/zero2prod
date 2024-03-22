@@ -31,10 +31,11 @@ jobs:
       - name: Build and push
         uses: mr-smithers-excellent/docker-build-push@v6
         with:
-          registry: ${{ secrets.DOCKERHUB_REGISTRY }}
+          registry: https://sjc.vultrcr.com/simbamart
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           image: ${{ github.repository }}:${{ github.sha }}
+          tags: latest
 
       - name: Push to dokku
         uses: dokku/github-action@master
