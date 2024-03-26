@@ -34,10 +34,3 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: targerian/zero2prod:${{ github.sha }}
-
-      - name: Push to dokku
-        uses: dokku/github-action@master
-        with:
-          git_remote_url: "ssh://dokku@65.21.158.230:22/zero2prod"
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          deploy_docker_image: targerian/zero2prod:${{ github.sha }}

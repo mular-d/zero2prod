@@ -1,9 +1,0 @@
-{
-  "name": "Zero2prod",
-  "description": "A book about building web applications with rust",
-  "repository": "https://github.com/targerian1999/Zero2prod",
-  "sucess_url": "/healthcheck",
-  "env": {
-    "BUILDPACK_URL": "https://github.com/emk/heroku-buildpack-rust.git"
-  }
-}
