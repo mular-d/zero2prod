@@ -70,27 +70,6 @@ pub async fn subscribe(
     Ok(HttpResponse::Ok().finish())
 }
 
-#[tracing::instrument(
-    name = "Store subscription token in the database",
-    skip(subscription_token, transaction)
-)]
-pub async fn store_token(
-    transaction: &mut Transaction<'_, Postgres>,
-    subscriber_id: Uuid,
-    subscription_token: &str,
-) -> Result<(), StoreTokenError> {
-    let query = sqlx::query!(
-        r#"INSERT INTO subscription_tokens (subscription_token, subscriber_id) VALUES ($1, $2)"#,
-        subscription_token,
-        subscriber_id
-    );
-    transaction.execute(query).await.map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
-        StoreTokenError(e)
-    })?;
-    Ok(())
-}
-
 #[derive(thiserror::Error)]
 pub enum SubscribeError {
     #[error("{0}")]
@@ -114,27 +93,12 @@ impl ResponseError for SubscribeError {
     }
 }
 
-pub struct StoreTokenError(sqlx::Error);
-
-impl std::fmt::Debug for StoreTokenError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
-}
-
-impl std::fmt::Display for StoreTokenError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "A database error was encountered while trying to store a subscription token."
-        )
-    }
-}
-
-impl std::error::Error for StoreTokenError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        Some(&self.0)
-    }
+fn generate_subscription_token() -> String {
+    let mut rng = thread_rng();
+    std::iter::repeat_with(|| rng.sample(Alphanumeric))
+        .map(char::from)
+        .take(25)
+        .collect()
 }
 
 #[tracing::instrument(
@@ -185,22 +149,52 @@ pub async fn insert_subscriber(
         new_subscriber.name.as_ref(),
         Utc::now()
     );
-    transaction.execute(query).await.map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
-        e
-    })?;
+    transaction.execute(query).await?;
     Ok(subscriber_id)
 }
 
-fn generate_subscription_token() -> String {
-    let mut rng = thread_rng();
-    std::iter::repeat_with(|| rng.sample(Alphanumeric))
-        .map(char::from)
-        .take(25)
-        .collect()
+#[tracing::instrument(
+    name = "Store subscription token in the database",
+    skip(subscription_token, transaction)
+)]
+pub async fn store_token(
+    transaction: &mut Transaction<'_, Postgres>,
+    subscriber_id: Uuid,
+    subscription_token: &str,
+) -> Result<(), StoreTokenError> {
+    let query = sqlx::query!(
+        r#"INSERT INTO subscription_tokens (subscription_token, subscriber_id) VALUES ($1, $2)"#,
+        subscription_token,
+        subscriber_id
+    );
+    transaction.execute(query).await.map_err(StoreTokenError)?;
+    Ok(())
 }
 
-fn error_chain_fmt(
+pub struct StoreTokenError(sqlx::Error);
+
+impl std::fmt::Debug for StoreTokenError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        error_chain_fmt(self, f)
+    }
+}
+
+impl std::fmt::Display for StoreTokenError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "A database error was encountered while trying to store a subscription token."
+        )
+    }
+}
+
+impl std::error::Error for StoreTokenError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.0)
+    }
+}
+
+pub fn error_chain_fmt(
     e: &impl std::error::Error,
     f: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
