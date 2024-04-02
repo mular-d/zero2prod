@@ -33,4 +33,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: targerian/zero2prod:${{ github.sha }}
+          tags: targerian/zero2prod:latest
